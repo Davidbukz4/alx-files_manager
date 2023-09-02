@@ -31,4 +31,6 @@ class DBClient {
     return this.db.collection('files').countDocuments();
   }
 }
-module.exports = DBClient;
+
+const dbClient = new DBClient();
+module.exports = dbClient;
