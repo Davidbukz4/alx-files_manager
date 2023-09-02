@@ -1,28 +1,29 @@
-import dbClient from '../utils/db';
-import hashPassword from '../utils/redis';
+const dbClient = require('../utils/db');
 
-class UserController {
-  static async postNew(req, resp) {
+class UsersController {
+  static async postNew (req, res) {
     const { email, password } = req.body;
     if (!email) {
-      return resp.status(400).json({ error: 'Missing email' });
+      res.status(400).json({ error: 'Missing email' });
+      res.end();
+      return;
     }
     if (!password) {
-      return resp.status(400).json({ error: 'Missing password' });
+      res.status(400).json({ error: 'Missing password' });
+      res.end();
+      return;
     }
-    const user = await dbClient.db.collection('users').findOne({ email });
-    if (user) {
-      return resp.status(400).json({ error: 'Already exist' });
+    const userExist = await dbClient.userExist(email);
+    if (userExist) {
+      res.status(400).json({ error: 'Already exist' });
+      res.end();
+      return;
     }
-    const newUser = {
-      email,
-      password: hashPassword(password),
-    };
-    await dbClient.db.collection('users').insertOne(newUser);
-    return resp.status(201).json({
-      id: newUser._id,
-      email,
-    });
+    const user = await dbClient.createUser(email, password);
+    const id = `${user.insertedId}`;
+    res.status(201).json({ id, email });
+    res.end();
   }
 }
-export default UserController;
+
+module.exports = UsersController;
