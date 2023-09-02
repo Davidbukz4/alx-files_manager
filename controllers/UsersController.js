@@ -1,29 +1,59 @@
-const dbClient = require('../utils/db');
+import dbClient from '../utils/db';
+import hashPassword from '../utils/hashPassword';
+import redisClient from '../utils/redis';
+import extractToken from '../utils/extractToken';
+
+const { ObjectId } = require('mongodb');
 
 class UsersController {
   static async postNew (req, res) {
     const { email, password } = req.body;
+
     if (!email) {
-      res.status(400).json({ error: 'Missing email' });
-      res.end();
-      return;
+      return res.status(400).json({ error: 'Missing email' });
     }
+
     if (!password) {
-      res.status(400).json({ error: 'Missing password' });
-      res.end();
-      return;
+      return res.status(400).json({ error: 'Missing password' });
     }
-    const userExist = await dbClient.userExist(email);
-    if (userExist) {
-      res.status(400).json({ error: 'Already exist' });
-      res.end();
-      return;
+
+    const user = await dbClient.db.collection('users').findOne({ email });
+
+    if (user) {
+      return res.status(400).json({ error: 'Already exist' });
     }
-    const user = await dbClient.createUser(email, password);
-    const id = `${user.insertedId}`;
-    res.status(201).json({ id, email });
-    res.end();
+
+    const newUser = {
+      email,
+      password: hashPassword(password)
+    };
+
+    await dbClient.db.collection('users').insertOne(newUser);
+
+    return res.status(201).json({
+      id: newUser._id,
+      email
+    });
+  }
+
+  static async getMe (req, res) {
+    const token = extractToken(req);
+    const key = `auth_${token}`;
+
+    const userId = await redisClient.get(key);
+
+    const user = await dbClient.db
+      .collection('users')
+      .findOne({ _id: new ObjectId(userId) });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    return res.status(200).json({
+      id: user._id,
+      email: user.email
+    });
   }
 }
-
-module.exports = UsersController;
+export default UsersController;
