@@ -1,5 +1,6 @@
-import dbClient from '../utils/db';
-import hashPassword from '../utils/redis';
+import DBClient from '../utils/db';
+import sha1 from 'sha1';
+import 
 
 class UserController {
   static async postNew (req, resp) {
@@ -16,7 +17,7 @@ class UserController {
     }
     const newUser = {
       email,
-      password: hashPassword(password)
+      password: sha1(password)
     };
     await dbClient.db.collection('users').insertOne(newUser);
     return resp.status(201).json({

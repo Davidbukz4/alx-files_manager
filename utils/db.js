@@ -6,7 +6,7 @@ const DATABASE = process.env.DB_DATABASE || 'files_manager';
 const URL = `mongodb://${HOST}:${PORT}`;
 
 class DBClient {
-  constructor() {
+  constructor () {
     MongoClient.connect(URL, (error, client) => {
       if (!error) {
         this.db = client.db(DATABASE);
@@ -16,20 +16,19 @@ class DBClient {
     });
   }
 
-  isAlive() {
+  isAlive () {
     if (this.db) {
       return true;
     }
     return false;
   }
 
-  async nbUsers() {
+  async nbUsers () {
     return this.db.collection('users').countDocuments();
   }
 
-  async nbFiles() {
+  async nbFiles () {
     return this.db.collection('files').countDocuments();
   }
 }
-const dbClient = new DBClient();
-module.exports = dbClient;
+module.exports = DBClient;
