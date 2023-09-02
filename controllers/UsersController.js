@@ -1,9 +1,8 @@
-import DBClient from '../utils/db';
 import sha1 from 'sha1';
-import 
+import dbClient from '../utils/db';
 
-class UserController {
-  static async postNew (req, resp) {
+class UsersController {
+  static async postNew(req, resp) {
     const { email, password } = req.body;
     if (!email) {
       return resp.status(400).json({ error: 'Missing email' });
@@ -17,13 +16,13 @@ class UserController {
     }
     const newUser = {
       email,
-      password: sha1(password)
+      password: sha1(password),
     };
     await dbClient.db.collection('users').insertOne(newUser);
     return resp.status(201).json({
       id: newUser._id,
-      email
+      email,
     });
   }
 }
-export default UserController;
+export default UsersController;
